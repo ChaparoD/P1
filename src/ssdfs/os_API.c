@@ -31,3 +31,10 @@ Plane* planeInit(){
     return newPlane;
 }
 
+// https://stackoverflow.com/questions/7863499/conversion-of-char-to-binary-in-c
+void printBinary(unsigned char c){
+    for( int i = 7; i >= 0; i-- ) {
+        printf( "%d", ( c >> i ) & 1 ? 1 : 0 );
+    }
+    printf("\n");
+}

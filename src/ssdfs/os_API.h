@@ -37,3 +37,7 @@ Page* pageInit();
 Block* blockInit();
 Plane* planeInit();
 
+
+
+//Print Structs
+void printBinary(unsigned char c);
