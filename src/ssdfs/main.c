@@ -7,7 +7,8 @@ int main(int argc, char const *argv[])
   printf("Hello P1!\n");
   //Plane* plano1 = planeInit();
 
-  unsigned char buffer[100];
+  unsigned long int size = 2147483648;
+  unsigned char buffer[size];
   FILE *ptr;
 
   ptr = fopen("simdiskfilled.bin","rb");  // r for read, b for binary
