@@ -45,6 +45,7 @@ void printBinary(unsigned short c);
 //Retorna página (4096Bytes) de lectura en arreglo buffer
 void seekPage(int Block, int Page, FILE* disk , unsigned short *buffer); //bloques del 0->2047 paginas 0 -> 255
 Page* chargeBitMap(FILE* ptr);
+void os_close_disk();
 //Funciones entregables
 void os_mount(char* diskname, unsigned int input_life);
 void os_bitmap(unsigned int num);

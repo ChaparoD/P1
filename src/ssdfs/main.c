@@ -103,6 +103,7 @@ int main(int argc, char const *argv[])
 
     else if (strncmp(input[0],"os_exit", 15) == 0){
       iter = 0;  
+      os_close_disk();
     }
 
     free_user_input(input);

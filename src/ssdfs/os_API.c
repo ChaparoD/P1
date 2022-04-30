@@ -51,6 +51,10 @@ Page* chargeBitMap(FILE* ptr){
     return newPage;
 };
 
+void os_close_disk(){
+  fclose(ptr);
+}
+
 
 //------------------------------------------------------------------//
 //  ===============   FUNCIONES  ENTREGABLES ====================   //
@@ -66,9 +70,7 @@ void os_mount(char* diskname, unsigned int input_life){
 
 void os_bitmap(unsigned int num){
     Page* bitMap = pageInit();
-    printf("%s AAAAAAAA\n", diskName);
     seekPage(0, 0, ptr, bitMap ->Shells);
-    printf("AAAAAAAA\n");
     if (num == 0){
       for(int i = 0; i < 2048; i++){
         printf("Celda %d   =  ", i+1);
@@ -91,20 +93,17 @@ void os_lifemap(int lower, int upper){
       current_page = 0;
       last_page = 255;
     }
-    Block* lifeMapBlock1 = blockInit();
     Page* page;
     for(current_page = current_page; current_page <= last_page; current_page++){
-        page = &(lifeMapBlock1 -> Pages[current_page]);
+        page = pageInit();
         seekPage(1, current_page, ptr, page ->Shells);
         for(int i = 0; i < 2048; i++){
           printf("Bloque 1, Pagina %d, Celda %d   =  ", current_page+1, i+1);
           printBinary(page -> Shells[i]);
         }
         free(page->Shells);
+        free(page);
     }
-
-    free(lifeMapBlock1->Pages);
-    free(lifeMapBlock1);
 
     current_page = lower;
     last_page = upper;
@@ -112,19 +111,15 @@ void os_lifemap(int lower, int upper){
       current_page = 0;
       last_page = 255;
     }
-    Block* lifeMapBlock2 = blockInit();
-    printf("BLOQUE 2\n");
     for(current_page = current_page; current_page <= last_page; current_page++){
-        page = &(lifeMapBlock2 -> Pages[current_page]);
+        page = pageInit();
         seekPage(2, current_page, ptr, page ->Shells);
         for(int i = 0; i < 2048; i++){
           printf("Bloque 2, Pagina %d, Celda %d   =  ", current_page+1, i+1);
           printBinary(page -> Shells[i]);
         }
         free(page->Shells);
+        free(page);
     }
-
-    free(lifeMapBlock2->Pages);
-    free(lifeMapBlock2);
 
 }
