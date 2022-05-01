@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+// os_tree y os_exists
+
 FILE *ptr;
 unsigned int life;
 char* diskName;
@@ -45,12 +47,35 @@ void seekPage(int Block, int Page, FILE* disk , unsigned short *buffer){
     fread(buffer,sizeof(buffer),1,disk);  // cargamos en buffer
 }
 
+void seekBlockDirectory(int entrada, FILE* disk, fileEntrada *buffer){
+    fseek(disk, 32 * entrada + 3*2048*256, SEEK_SET);
+    fread(buffer->valid, sizeof(uint8_t), 1, disk);
+    fread(buffer->pointer, sizeof(uint32_t), 4, disk);
+    fread(buffer->name, sizeof(unsigned char), 27, disk);
+
+};
+
 Page* chargeBitMap(FILE* ptr){
     Page* newPage = pageInit();
     seekPage(0, 0, ptr, newPage ->Shells);
     return newPage;
 };
 
+// bloque directorio
+fileEntrada* fileEntradaInit(int n_entradas)
+{
+  fileEntrada* file_entrada = calloc(n_entradas, sizeof(fileEntrada));
+  
+  return file_entrada;
+}
+
+directoryBlock* directoryBlockInit()
+{
+  directoryBlock* new_block = calloc(1, sizeof(directoryBlock));
+  new_block->entradas = fileEntradaInit(32768);
+
+  return new_block;
+}
 
 //------------------------------------------------------------------//
 //  ===============   FUNCIONES  ENTREGABLES ====================   //
@@ -127,4 +152,50 @@ void os_lifemap(int lower, int upper){
     free(lifeMapBlock2->Pages);
     free(lifeMapBlock2);
 
+}
+
+// void os_tree(){
+
+//     fileDirectory* block_directorio = fileDirectoryInit();
+//     seekBlockDirectory(ptr, block_directorio->pointer);
+//     for (size_t i = 0; i < count; i++)
+//     {
+//         /* como recorremos esta wea */;
+//     }
+// }
+
+void printBinary_32Bytes(fileEntrada c){
+    
+    // byte valid
+    for (int i = 7; i >= 0; i--)
+    {
+      printf("%d", ( (uint8_t) c.valid >> i ) & 1 ? 1 : 0);
+    }
+
+    // 4 bytes 
+    for (int i = 31; i >= 0; i--)
+    {
+      printf("%d", ((uint32_t) c.pointer >> i) & 1 ? 1 : 0);
+    }
+
+    // 27 bytes
+
+    for (int i = 215; i >= 0; i--)
+    {
+      printf("%d", ((unsigned char) c.name >> i ) & 1 ? 1 : 0);
+    }
+
+    printf("\n");
+}
+
+int os_exists(char* filename)
+{
+  fileEntrada* entrada = fileEntradaInit(1);
+  printf("BLOQUE DIRECTORIO\n");
+  for (int i = 0; i < 32768; i++)
+  {
+    printf("entrada %i:\n", i);
+    seekBlockDirectory(i, diskName, entrada);
+    printBinary_32Bytes(*entrada);
+  }
 }
