@@ -101,6 +101,16 @@ int main(int argc, char const *argv[])
       os_lifemap(lower, upper);
     }
 
+    else if (strncmp(input[0],"os_exists", 15) == 0){
+      char* filename = argv[1];
+      os_exists(filename);
+    }
+
+    else if (strncmp(input[0],"os_mkdir", 15) == 0){
+      char* directoryname = argv[1];
+      os_mkdir(directoryname);
+    }
+
     else if (strncmp(input[0],"os_exit", 15) == 0){
       iter = 0;  
       os_close_disk();

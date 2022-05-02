@@ -1,6 +1,9 @@
 #include "./os_API.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h> 
+
+// os_tree y os_exists
 
 FILE *ptr;
 unsigned int life;
@@ -40,10 +43,31 @@ void printBinary(unsigned short c){
     }
     printf("\n");
 }
+
+void printBinaryBytes(unsigned char c){
+    for( int i = 7; i >= 0; i-- ) {
+        printf( "%d", ( c >> i ) & 1 ? 1 : 0 );
+    }
+    printf("\n");
+}
+
 void seekPage(int Block, int Page, FILE* disk , unsigned short *buffer){
     fseek(disk, Page*2048 + Block*2048*256, SEEK_SET); //seteamos el punto de partida de lectura
     fread(buffer,sizeof(buffer),1,disk);  // cargamos en buffer
 }
+
+void seekPageBytes(int Block, int Page, FILE* disk , unsigned char *buffer){
+    fseek(disk, Page*2048 + Block*2048*256, SEEK_SET); //seteamos el punto de partida de lectura
+    fread(buffer,sizeof(buffer),1,disk);  // cargamos en buffer
+}
+
+void seekBlockDirectory(int entrada, FILE* disk, fileEntrada *buffer){
+    fseek(disk, 32 * entrada + 3*2048*256, SEEK_SET);
+    fread(buffer->valid, sizeof(buffer->valid), 1, disk);
+    fread(buffer->pointer, sizeof(buffer->pointer), 4, disk);
+    fread(buffer->name, sizeof(buffer->name), 27, disk);
+
+};
 
 Page* chargeBitMap(FILE* ptr){
     Page* newPage = pageInit();
@@ -55,6 +79,21 @@ void os_close_disk(){
   fclose(ptr);
 }
 
+// bloque directorio
+fileEntrada* fileEntradaInit(int n_entradas)
+{
+  fileEntrada* file_entrada = calloc(n_entradas, sizeof(fileEntrada));
+  
+  return file_entrada;
+}
+
+directoryBlock* directoryBlockInit()
+{
+  directoryBlock* new_block = calloc(1, sizeof(directoryBlock));
+  new_block->entradas = fileEntradaInit(32768);
+
+  return new_block;
+}
 
 //------------------------------------------------------------------//
 //  ===============   FUNCIONES  ENTREGABLES ====================   //
@@ -122,4 +161,125 @@ void os_lifemap(int lower, int upper){
         free(page);
     }
 
+}
+
+// void os_tree(){
+
+//     fileDirectory* block_directorio = fileDirectoryInit();
+//     seekBlockDirectory(ptr, block_directorio->pointer);
+//     for (size_t i = 0; i < count; i++)
+//     {
+//         /* como recorremos esta wea */;
+//     }
+// }
+
+void printBinary_32Bytes(fileEntrada c){
+    
+    // byte valid
+    for (int i = 7; i >= 0; i--)
+    {
+      printf("%d", ( (u_int8_t) c.valid >> i ) & 1 ? 1 : 0);
+    }
+
+    // 4 bytes 
+    for (int i = 31; i >= 0; i--)
+    {
+      printf("%d", ((u_int32_t) c.pointer >> i) & 1 ? 1 : 0);
+    }
+
+    // 27 bytes
+
+    for (int i = 215; i >= 0; i--)
+    {
+      printf("%d", ((unsigned char) c.name >> i ) & 1 ? 1 : 0);
+    }
+
+    printf("\n");
+}
+
+int os_exists(char* filename)
+{
+  char* extracted_name[27];
+  int current_byte = 1;
+  for(int pagenum = 0; pagenum < 256; pagenum++){
+    Page* newPage = pageInit();
+    newPage -> Bytes = calloc(4096, sizeof(unsigned char));
+    seekPageBytes(3, pagenum, ptr, newPage->Bytes);
+    for(int i = 5; i < 4096; i++){
+      char asciibyte = newPage->Bytes[i];
+      //printf("Contenido byte %d: %c\n", i+1, newPage->Bytes[i]);
+      //printBinaryBytes(newPage->Bytes[i]);
+      extracted_name[current_byte-1] = asciibyte;
+      //printf("EXTRACTED NAME: %s\n", extracted_name);
+      if(current_byte == 27){
+        i += 5;
+        current_byte = 1;
+        if (strncmp(filename,extracted_name, 30) == 0){ 
+          free(newPage->Bytes);
+          free(newPage->Shells);
+          free(newPage);
+          return 1;
+        }
+        else{
+          strncpy(extracted_name, "", sizeof(extracted_name));
+        } 
+      }
+      else{
+        current_byte++;
+      }
+    }
+    free(newPage->Bytes);
+    free(newPage->Shells);
+    free(newPage);
+  }
+
+  printf("File does not exist\n");
+  return 0;
+}
+
+int os_mkdir(char* path){
+  int position = 0;
+  int break_cycle = 0;
+  for(int pagenum = 0; pagenum < 256; pagenum++){
+    position = 0;
+    Page* newPage = pageInit();
+    newPage -> Bytes = calloc(4096, sizeof(unsigned char));
+    seekPageBytes(3, pagenum, ptr, newPage->Bytes);
+    for(int i = 0; i < 4096; i+=32){
+      //printf("Contenido byte %d: %c\n", i+1, newPage->Bytes[i]);
+      //printBinaryBytes(newPage->Bytes[i]);
+      if(newPage->Bytes[i] == 0){
+        fclose(ptr);
+        ptr = fopen(diskName,"wb");
+        // se sobreescribe el 1 byte de la entrada del bloque 3 (directorio)
+        fseek(ptr, pagenum*2048 + 3*2048*256 + i, SEEK_SET);
+        int one[1] = {1};
+        fwrite(one,sizeof(one),1,ptr);
+        // se sobreescriben los 27 bytes de la entrada del bloque 3 
+        fseek(ptr, pagenum*2048 + 3*2048*256 + i + 5, SEEK_SET);
+        fwrite(path, sizeof(path), 1, ptr);
+        // se suma 1 a la posicion correspondiente en el lifemap
+        fseek(ptr, pagenum*2048 + 1*2048*256 + 4*position, SEEK_SET);
+        unsigned char* bytes4 = calloc(1, 2*sizeof(unsigned short));
+        int number[1] = {1+atoi(bytes4)};
+        fwrite(number, sizeof(number), 1, ptr);
+
+        free(bytes4);
+        fclose(ptr);
+        os_mount(diskName, life);
+        break_cycle = 1;
+        break;
+      }
+      position++;
+    }
+    free(newPage->Bytes);
+    free(newPage->Shells);
+    free(newPage);
+    if(break_cycle){
+      break;
+    }
+  }
+
+  printf("directory added succesfully\n");
+  return 1;
 }
