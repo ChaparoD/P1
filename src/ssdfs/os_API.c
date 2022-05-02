@@ -210,6 +210,7 @@ int os_exists(char* filename)
       //printf("Contenido byte %d: %c\n", i+1, newPage->Bytes[i]);
       //printBinaryBytes(newPage->Bytes[i]);
       extracted_name[current_byte-1] = asciibyte;
+      //printf("EXTRACTED NAME: %s\n", extracted_name);
       if(current_byte == 27){
         i += 5;
         current_byte = 1;
@@ -234,4 +235,51 @@ int os_exists(char* filename)
 
   printf("File does not exist\n");
   return 0;
+}
+
+int os_mkdir(char* path){
+  int position = 0;
+  int break_cycle = 0;
+  for(int pagenum = 0; pagenum < 256; pagenum++){
+    position = 0;
+    Page* newPage = pageInit();
+    newPage -> Bytes = calloc(4096, sizeof(unsigned char));
+    seekPageBytes(3, pagenum, ptr, newPage->Bytes);
+    for(int i = 0; i < 4096; i+=32){
+      //printf("Contenido byte %d: %c\n", i+1, newPage->Bytes[i]);
+      //printBinaryBytes(newPage->Bytes[i]);
+      if(newPage->Bytes[i] == 0){
+        fclose(ptr);
+        ptr = fopen(diskName,"wb");
+        // se sobreescribe el 1 byte de la entrada del bloque 3 (directorio)
+        fseek(ptr, pagenum*2048 + 3*2048*256 + i, SEEK_SET);
+        int one[1] = {1};
+        fwrite(one,sizeof(one),1,ptr);
+        // se sobreescriben los 27 bytes de la entrada del bloque 3 
+        fseek(ptr, pagenum*2048 + 3*2048*256 + i + 5, SEEK_SET);
+        fwrite(path, sizeof(path), 1, ptr);
+        // se suma 1 a la posicion correspondiente en el lifemap
+        fseek(ptr, pagenum*2048 + 1*2048*256 + 4*position, SEEK_SET);
+        unsigned char* bytes4 = calloc(1, 2*sizeof(unsigned short));
+        int number[1] = {1+atoi(bytes4)};
+        fwrite(number, sizeof(number), 1, ptr);
+
+        free(bytes4);
+        fclose(ptr);
+        os_mount(diskName, life);
+        break_cycle = 1;
+        break;
+      }
+      position++;
+    }
+    free(newPage->Bytes);
+    free(newPage->Shells);
+    free(newPage);
+    if(break_cycle){
+      break;
+    }
+  }
+
+  printf("directory added succesfully\n");
+  return 1;
 }

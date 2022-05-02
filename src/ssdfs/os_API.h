@@ -51,6 +51,7 @@ struct directory
     fileEntrada* entradas;
 };
 
+
 //Init Functions
 Page* pageInit();
 Block* blockInit();
@@ -73,3 +74,4 @@ void os_bitmap(unsigned int num);
 void os_lifemap(int lower, int upper);
 void os_tree();
 int os_exists(char* filename);
+int os_mkdir(char* path);
