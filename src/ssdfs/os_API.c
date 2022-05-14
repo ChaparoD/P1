@@ -2,9 +2,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-
-
-
 Page* pageInit(){
     Page* newPage = calloc(1, sizeof(Page));
     newPage -> Shells = calloc(2048, sizeof(unsigned short));
@@ -42,14 +39,25 @@ void printBinary(unsigned short c){
 void seekPage(int Block, int Page, FILE* disk , unsigned short *buffer){
     fseek(disk, Page*2048 + Block*2048*256, SEEK_SET); //seteamos el punto de partida de lectura
     fread(buffer,sizeof(buffer),1,disk);  // cargamos en buffer
+    for(int i = 0; i < 2048; i++)
+    {
+        //printf("BUFFER: %i\n", buffer[i]);
+    }
 }
 
 Page* chargeBitMap(FILE* ptr){
     Page* newPage = pageInit();
     seekPage(0, 0, ptr, newPage ->Shells);
+    newPage -> page_num = 0;
     return newPage;
-};
+}
 
+Block* chargeLifeMap (int block_num){
+    Block* newBlock = blockInit();
+    newBlock -> block_type = bLIFEMAP;
+    newBlock -> block_num = block_num;
+    return newBlock;
+}
 
 //------------------------------------------------------------------//
 //  ===============   FUNCIONES  ENTREGABLES ====================   //
@@ -59,4 +67,9 @@ Page* chargeBitMap(FILE* ptr){
 void os_mount(char* diskname, unsigned int life, FILE** ptr){
     *ptr = fopen(diskname,"rb");  // r for read, b for binary
     //"simdiskfilled.bin"
+}
+
+void os_bitmap(unsigned num)
+{
+
 }

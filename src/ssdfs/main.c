@@ -13,19 +13,26 @@ int main(int argc, char const *argv[])
   FILE *ptr = NULL;
   char* diskName = NULL;
   Page* bitMap = NULL;  //usa una página , entonces trabajamos directamente con la página
+  //Block* lifeMapBlock1 = NULL;
+  //Block* lifeMapBlock2 = NULL;
   //char* diskName = argv[1];
   //os_mount(diskName, 145363523, &ptr);
   //ptr = fopen(diskName,"rb");
   int iter = 1;
+  char** input;
   while (iter){
+    printf("Please enter command: \n");
 
+    input = read_user_input();
     // Entra corriendo ./ssdfs os_mount diskName life  (FUNCIONANDO)
-    if (strncmp(argv[2],"os_mount", 15) == 0){
+    if (strncmp(input[0],"os_mount", 15) == 0){
       printf("Entering OS_MOUNT \n");
-      diskName = argv[2];  //Arroja warning pero funciona
-      unsigned int life = atoi(argv[3]);
+      diskName = argv[1];  //Arroja warning pero funciona
+      unsigned int life = atoi(input[1]);
       os_mount(diskName, life, &ptr);
       bitMap = chargeBitMap(ptr);
+      //lifeMapBlock1 = chargeLifeMap(0);
+      //lifeMapBlock2 = chargeLifeMap(1);
       printBinary(bitMap -> Shells[45]);  //testeado
     }
     //Testing retorno de páginas. //Con esta funcion podemos copiar en nuevos structs Page y Blocks.
@@ -37,10 +44,11 @@ int main(int argc, char const *argv[])
     // }
     
 
-    else if (strncmp(argv[2],"os_bitmap", 15) == 0){
+    else if (strncmp(input[0],"os_bitmap", 15) == 0){
       printf("Entering OS_BITMAP \n");
+      bitMap = chargeBitMap(ptr);
       //Se asume que ya se montó el disco
-      int num = atoi(argv[3]);
+      int num = atoi(input[1]);
       if (num == 0){
         for(int i = 0; i < 2048; i++){
           printf("Bloque %d   =  ", i+1);
@@ -54,17 +62,10 @@ int main(int argc, char const *argv[])
 
     }
 
-    iter = 0;  
-    
+    iter = 0;
   }
-
-  
- 
-  
-    
+   
 }
-
-
 
 // PARA TESTEAR ACCESO A DISCO  
   //iter bloques 1024 x2  (0 -> 2047)

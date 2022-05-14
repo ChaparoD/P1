@@ -9,6 +9,11 @@ typedef struct page Page;
 struct page {
     // Cada pagina tiene 2048 celdas
     unsigned short* Shells; //arreglo de celdas de 8bits (1 byte)
+    enum page_types {pBITMAP, pLIFEMAP, pDIRECTORY, pINDEX, pDATA} page_type;
+    int page_num;
+
+    // atributos por si es un bloque LIFEMAP
+    u_int32_t pr_ops_quantity;
 
 };
 
@@ -17,7 +22,10 @@ typedef struct block Block;
 struct block {
     // Cada bloque tiene 256 paginas
     Page* Pages;
+    Block* next;
+    int block_num;
 
+    enum block_types {bBITMAP, bLIFEMAP, bDIRECTORY, bINDEX, bDATA} block_type;
 };
 
 struct plane;
@@ -29,9 +37,16 @@ struct plane {
     Block* Blocks;
 };
 
+struct linked_list;
+typedef struct linked_list LinkedList;
+struct linked_list {
+    Block* first;
+    Block* tail;
+};
+
 struct disc;
 typedef struct disc osFile;
-struct osFile {
+struct disc {
 
 };
 
@@ -47,6 +62,8 @@ void printBinary(unsigned short c);
 //Retorna página (4096Bytes) de lectura en arreglo buffer
 void seekPage(int Block, int Page, FILE* disk , unsigned short *buffer); //bloques del 0->2047 paginas 0 -> 255
 Page* chargeBitMap(FILE* ptr);
+Block* chargeLifeMap(int block_num);
 //Funciones entregables
 void os_mount(char* diskname, unsigned int life, FILE** ptr);
-void os_bitmap(unsigned int num);
+void os_bitmap(unsigned num);
+void os_lifemap(int lower, int upper);
